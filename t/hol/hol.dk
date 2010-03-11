@@ -1,0 +1,114 @@
+htype: Type.
+o: htype.
+arrow: htype -> htype -> htype.
+
+
+hterm: htype -> Type.
+Lam: a: htype -> b: htype -> (hterm a -> hterm b) -> hterm (arrow a b).
+App: a: htype -> b: htype -> hterm (arrow a b) -> hterm a -> hterm b.
+Imp: hterm (arrow o (arrow o o)).
+Forall: a: htype -> hterm (arrow (arrow a o) o).
+Eq: a: htype -> hterm (arrow a (arrow a o)).
+
+
+;; Facilities
+
+himp: hterm o -> hterm o -> hterm o.
+[a: hterm o,
+ b: hterm o] himp a b --> App o o (App o (arrow o o) Imp a) b.
+
+
+hforall: a: htype -> hterm (arrow a o) -> hterm o.
+[a: htype,
+ P: hterm (arrow a o)] hforall a P --> App (arrow a o) o (Forall a) P.
+
+
+heq: a: htype -> hterm a -> hterm a -> hterm o.
+[a: htype,
+ x: hterm a,
+ y: hterm a] heq a x y --> App a o (App a (arrow a o) (Eq a) x) y.
+
+
+hequiv: hterm o -> hterm o -> hterm o.
+[] hequiv --> heq o.
+
+
+;; eps
+
+eps: hterm o -> Type.
+
+[a: hterm o,
+ b: hterm o] eps (himp a b) --> eps a -> eps b.
+
+[a: htype,
+ f: hterm a -> hterm o] eps (hforall a (Lam a o f)) --> b: hterm a -> eps (f b).
+
+[a: htype,
+ x: hterm a,
+ y: hterm a] eps (heq a x y) --> P: hterm (arrow a o) -> eps (App a o P x) -> eps (App a o P y).
+
+
+;; Extensionality
+
+fun_ext: a: htype -> b: htype -> f: hterm (arrow a b) -> g: hterm (arrow a b) ->
+    (x: hterm a -> eps (heq b (App a b f x) (App a b g x))) -> eps (heq (arrow a b) f g).
+
+prop_ext: p: hterm o -> q: hterm o -> eps (himp p q) -> eps (himp q p) -> eps (hequiv p q).
+
+
+;; Rules
+
+refl: a: htype -> x: hterm a -> eps (heq a x x).
+[a: htype,
+ x: hterm a] refl a x --> P: hterm (arrow a o) => h: eps (App a o P x) => h.
+
+; trans: a: htype -> s: hterm a -> t: hterm a -> u: hterm a
+
+
+;; o : Type.
+;; eps : o -> Type.
+
+;; and       : a:o -> b:o -> o.
+;; and_intro : a:o -> b:o -> x:eps a -> y:eps b -> eps (and a b).
+;; and_elim  : a:o -> b:o -> c:o -> f:(eps a -> eps b -> eps c) -> eps (and a b) -> eps c.
+
+;; [A:o,
+;;  B:o,
+;;  C:o,
+;;  f:(eps A -> eps B -> eps C),
+;;  x:eps A,
+;;  y:eps B] and_elim A B C f (and_intro x y) --> f x y.
+
+;; eq         : a:o -> eps a -> eps a -> o.
+;; refl_equal : a:o -> x:eps a -> eq a x x.
+;; rec_eq     : a:o -> P:(eps a -> o) -> x:eps a -> y:eps a -> eq a x y -> P x -> P y.
+
+;; [A:o,
+;;  P:(eps A -> o),
+;;  x:eps A,
+;;  f:P x] rec_eq A P x x (refl_equal A x) f --> f.
+
+;; ; ht    = type des types formés à partir de o et -> en HOL
+;; ; base  = o de HOL
+;; ; arrow = -> de HOL
+
+;; htype : Type.
+;; base : htype.
+;; arrow : htype -> htype -> htype.
+
+;; tr_type : htype -> Type.
+
+;; Lam : a:htype -> b:htype -> (tr_type a -> tr_type b) -> tr_type (arrow a b).
+;; App : a:htype -> b:htype -> tr_type (arrow a b) -> tr_type a -> tr_type b.
+
+;; HolAnd : arrow base (arrow base base).
+;; HolOr  : arrow base (arrow base base).
+;; ; HolForall : ???
+
+;; [] tr_type base --> o.
+;; [a:htype,b:htype] tr_type (arrow a b)  --> tr_type a -> tr_type b.
+
+
+
+;; ;[a:htype,b:htype] thm (HolAnd a b) --> eps (and (thm a) (thm b)).
+;; ; [a:htype,b:htype] thm (HolOr a b)  --> eps (or (thm a) (thm b)).
