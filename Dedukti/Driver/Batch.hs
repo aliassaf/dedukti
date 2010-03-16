@@ -19,7 +19,6 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Data.Map as Map
 import Control.Monad.State
 import Control.Applicative
-import qualified GHC.Conc
 import System.Directory (copyFile)
 import Data.Char (toUpper)
 
@@ -118,10 +117,10 @@ make modules = do
   rs <- process cmp <$> rules modules
   -- Depending on whether we have several cores or not, we either call
   -- mkConcurrent to perform all the tasks concurrently, or call mk to create
-  -- a schedule and execute that. We call mk lazily because if we have several
-  -- cores then calculating the schedule is redundant.
-  schedule <- lazyDkM $ mk rs targets
-  say Debug $ text "Tasks to execute:" <+> int (length schedule)
-  if GHC.Conc.numCapabilities > 1 then
-      io $ mkConcurrent GHC.Conc.numCapabilities (map run rs) targets else
-      sequence_ schedule
+  -- a schedule and execute that.
+  n <- parameter Config.jobs
+  if n > 1 then
+      do io $ mkConcurrent n (map run rs) targets else
+      do schedule <- mk rs targets
+         say Verbose $ text "Tasks to execute:" <+> int (length schedule)
+         sequence_ schedule
