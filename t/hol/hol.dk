@@ -1,7 +1,11 @@
+;; Types
+
 htype: Type.
 o: htype.
 arrow: htype -> htype -> htype.
 
+
+;; Terms
 
 hterm: htype -> Type.
 Lam: a: htype -> b: htype -> (hterm a -> hterm b) -> hterm (arrow a b).
@@ -114,32 +118,12 @@ mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) ->
 
 abs: a: htype -> b: htype -> s: hterm b -> t: hterm b ->
   eps (heq b s t) -> eps (heq (arrow a b) (Lam a b (x: hterm a => s)) (Lam a b (x: hterm a => t))).
-;; [a: htype,
-;;  b: htype,
-;;  s: hterm b,
-;;  t: hterm b,
-;;  Hst: eps (heq b s t)] ; P: hterm (arrow b o) -> eps (App b o P s) -> eps (App b o P t)
-;; abs a b s t Hst --> fun_ext _ _ _ _ (x: hterm a => trans () ())
-; eps (heq b (App a b (Lam a b (x: hterm a => s)) x) (App a b (Lam a b (x: hterm a => t)) x))
-; =
-
-; eps (heq (arrow a b) (Lam a b (x: hterm a => s)) (Lam a b (x: hterm a => t)))
-; = P: hterm (arrow (arrow a b) o) -> eps (App (arrow a b) o P (Lam a b (x: hterm a => s)))
-;                                  -> eps (App (arrow a b) o P (Lam a b (x: hterm a => t)))
-
-;; fun_ext: a: htype -> b: htype -> f: hterm (arrow a b) -> g: hterm (arrow a b) ->
-;;     (x: hterm a -> eps (heq b (App a b f x) (App a b g x))) -> eps (heq (arrow a b) f g).
-
-; beta: a: htype -> b: htype -> f: (hterm a -> hterm b) -> u: hterm a -> eps (heq b (App a b (Lam a b f) u) (f u)).
-
-
-
-;; App: hterm (arrow a b) -> hterm a -> hterm b
-;; Lam: (hterm a -> hterm b) -> hterm (arrow a b)
-
-;; [a: htype,
-;;  x: hterm a,
-;;  y: hterm a] eps (heq a x y) --> P: hterm (arrow a o) -> eps (App a o P x) -> eps (App a o P y).
+[a: htype,
+ b: htype,
+ s: hterm b,
+ t: hterm b,
+ Hst: eps (heq b s t)]
+abs a b s t Hst --> fun_ext a b (Lam a b (x: hterm a => s)) (Lam a b (x: hterm a => t)) (x : hterm a => Hst).
 
 
 
@@ -147,3 +131,4 @@ abs: a: htype -> b: htype -> s: hterm b -> t: hterm b ->
 ;; - refl
 ;; - trans
 ;; - sym
+;; - abs
