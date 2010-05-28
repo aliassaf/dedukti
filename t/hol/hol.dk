@@ -68,16 +68,6 @@ fun_ext: a: htype -> b: htype -> f: hterm (arrow a b) -> g: hterm (arrow a b) ->
 prop_ext: p: hterm o -> q: hterm o -> eps (himp p q) -> eps (himp q p) -> eps (hequiv p q).
 
 
-;; Beta rule
-
-beta: a: htype -> b: htype -> f: (hterm a -> hterm b) -> u: hterm a -> eps (heq b (App a b (Lam a b f) u) (f u)).
-[a: htype,
- b: htype,
- f: hterm a -> hterm b,
- u: hterm a]
-beta a b f u --> P: hterm (arrow b o) => H: eps (App b o P (f u)) => H.
-
-
 ;; Rules
 
 refl: a: htype -> x: hterm a -> eps (heq a x x).
@@ -103,6 +93,14 @@ trans: a: htype -> s: hterm a -> t: hterm a -> u: hterm a -> eps (heq a s t) -> 
 trans a s t u Hst Htu --> P: hterm (arrow a o) => Hs: eps (App a o P s) => Htu P (Hst P Hs).
 
 
+beta: a: htype -> b: htype -> f: (hterm a -> hterm b) -> u: hterm a -> eps (heq b (App a b (Lam a b f) u) (f u)).
+[a: htype,
+ b: htype,
+ f: hterm a -> hterm b,
+ u: hterm a]
+beta a b f u --> P: hterm (arrow b o) => H: eps (App b o P (f u)) => H.
+
+
 mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) -> u: hterm a -> v: hterm a ->
   eps (heq (arrow a b) s t) -> eps (heq a u v) -> eps (heq b (App a b s u) (App a b t v)).
 ;; [a: htype,
@@ -116,19 +114,11 @@ mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) ->
 ;; mk_comb a b s t u v Hst Huv --> P: hterm (arrow b o) => Hsu: eps (App b o P (App a b s u)) =>
 ;;   ; eps (App b o P (App a b t v))
 
-abs: a: htype -> b: htype -> s: hterm b -> t: hterm b ->
-  eps (heq b s t) -> eps (heq (arrow a b) (Lam a b (x: hterm a => s)) (Lam a b (x: hterm a => t))).
-[a: htype,
- b: htype,
- s: hterm b,
- t: hterm b,
- Hst: eps (heq b s t)]
-abs a b s t Hst --> fun_ext a b (Lam a b (x: hterm a => s)) (Lam a b (x: hterm a => t)) (x : hterm a => Hst).
 
+;; Abs cannot be written (meta-rule), we can only write instances of it
 
 
 ;; Liste des règles de HOL-Light qui fonctionnent :
 ;; - refl
 ;; - trans
 ;; - sym
-;; - abs
