@@ -1,9 +1,9 @@
 name:           dedukti
-version:        1.0.3
+version:        1.1.2
 author:         Mathieu Boespflug
 maintainer:     Mathieu Boespflug <mboes@lix.polytechnique.fr>
 copyright:      © 2009 CNRS - École Polytechnique - INRIA
-homepage:       http://www.lix.polytechnique.fr/~mboes/src/dedukti.git
+homepage:       http://www.lix.polytechnique.fr/dedukti
 synopsis:       A type-checker for the λΠ-modulo calculus.
 description:
     Dedukti is a proof checker for the λΠ-modulo calculus, a
@@ -16,7 +16,7 @@ category:       Theorem Provers, Compilers/Interpreters
 license:        GPL
 license-file:   COPYING
 cabal-version:  >= 1.6.0
-build-type:     Simple
+build-type:     Custom
 tested-with:    GHC ==6.10
 data-files:     t/bug.dk
                 t/coc.dk
@@ -36,45 +36,69 @@ extra-source-files:   doc/mkfile
                       doc/fdl.texi
                       doc/references.texi
 
+flag test
+  description: Compile test harness (requires test-framework).
+  default:     False
+
+source-repository head
+  type:     git
+  location: git://github.com/mboes/dedukti
+
+library
+  exposed-modules:     Dedukti.Runtime
+  build-depends:       time >= 1.1, unix >= 2.3
+  extensions:          DeriveDataTypeable, PatternGuards, FlexibleInstances
+  ghc-options:         -fwarn-unused-binds -fwarn-unused-imports
 
 executable dedukti
   main-is:             Dedukti.hs
-  other-modules:       Dedukti.Core,
-                       Dedukti.Parser,
-                       Dedukti.Parser.External,
-                       Dedukti.Parser.Prefix,
-                       Dedukti.Pretty,
-                       Dedukti.Driver.Interactive,
-                       Dedukti.Driver.Batch,
-                       Dedukti.Driver.Compile,
-                       Dedukti.Rule,
-                       Dedukti.DkM,
-                       Dedukti.Config,
-                       Dedukti.Module,
+  other-modules:       Dedukti.Core
+                       Dedukti.Parser
+                       Dedukti.Parser.External
+                       Dedukti.Parser.Prefix
+                       Dedukti.Parser.Interface
+                       Dedukti.Pretty
+                       Dedukti.Driver.Interactive
+                       Dedukti.Driver.Batch
+                       Dedukti.Driver.Compile
+                       Dedukti.Rule
+                       Dedukti.DkM
+                       Dedukti.Config
+                       Dedukti.Module
                        Dedukti.CodeGen
-                       Dedukti.CodeGen.Exts,
-                       Dedukti.Analysis.Rule,
-                       Dedukti.Analysis.Scope,
+                       Dedukti.CodeGen.Exts
+                       Dedukti.Analysis.Rule
+                       Dedukti.Analysis.Scope
                        Dedukti.Analysis.Dependency
-
+                       System.Console.Option
   build-depends:       base >= 4 && < 5, mtl >= 1.1, containers >= 0.2,
                        directory, filepath, process,
                        bytestring >= 0.9.1.0,
                        parsec >= 3.1.0,
                        wl-pprint >= 1.0,
                        haskell-src-exts >= 1.1.0,
+                       haskell-src-exts-qq >= 0.1,
                        Stream >= 0.3 && < 0.3.2,
                        hmk >= 0.9.7,
                        stringtable-atom >= 0.0.6
-  extensions:          EmptyDataDecls, PatternGuards, GeneralizedNewtypeDeriving
-                       DeriveDataTypeable, TypeFamilies, LiberalTypeSynonyms,
+  extensions:          EmptyDataDecls, PatternGuards,
+                       GeneralizedNewtypeDeriving, DeriveDataTypeable,
+                       TypeFamilies, LiberalTypeSynonyms,
                        FlexibleInstances, FlexibleContexts, OverloadedStrings,
                        RecordWildCards, TypeSynonymInstances, ScopedTypeVariables
-                       MultiParamTypeClasses
+                       MultiParamTypeClasses,
+                       TemplateHaskell, QuasiQuotes
   ghc-options:         -fwarn-unused-binds -fwarn-unused-imports
 
-library
-  exposed-modules:     Dedukti.Runtime
-  build-depends:       time >= 1.1
-  extensions:          DeriveDataTypeable, PatternGuards, FlexibleInstances
-  ghc-options:         -fwarn-unused-binds -fwarn-unused-imports
+
+executable dedukti-tests
+  main-is:             Test.hs
+  if !flag(test)
+    buildable: False
+  else
+    buildable: True
+    build-depends:       directory, filepath, process,
+                         test-framework >= 0.2 && < 0.3
+    extensions:          DeriveDataTypeable, MultiParamTypeClasses,
+                         RecordWildCards
+    ghc-options:         -fwarn-unused-binds -fwarn-unused-imports
