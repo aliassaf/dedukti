@@ -114,20 +114,12 @@ mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) ->
 mk_comb a b s t u v Hst Huv --> P: hterm (arrow b o) => Hsu: eps (App b o P (App a b s u)) => Hst (Lam (arrow a b) o (s: hterm (arrow a b) => App b o P (App a b s v))) (Huv (Lam a o (u: hterm a => App b o P (App a b s u))) Hsu).
 
 
-eq_mp : p: hterm o -> q: hterm o -> eps (heq o p q) -> eps p -> eps q.
+eq_mp : p: hterm o -> q: hterm o -> eps (hequiv p q) -> eps p -> eps q.
 [p: hterm o,
  q: hterm o,
- Hpq: eps (heq o p q), ; P: hterm (arrow o o) -> eps (App o o P p) -> eps (App o o P q)
+ Hpq: eps (hequiv p q), ; P: hterm (arrow o o) -> eps (App o o P p) -> eps (App o o P q)
  Hp: eps p]
 eq_mp p q Hpq Hp --> Hpq (Lam o o (r: hterm o => r)) Hp.
-
-
-;; eq_mp : p: hterm o -> q: hterm o -> eps (hequiv p q) -> eps p -> eps q.
-;; [p: hterm o,
-;;  q: hterm o,
-;;  Hpq: eps (hequiv p q),
-;;  Hp: eps p]
-;; eq_mp p q Hpq Hp --> Hpq (Lam o o (r: hterm o => r)) Hp.
 
 
 
