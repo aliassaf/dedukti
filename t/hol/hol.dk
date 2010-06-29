@@ -103,22 +103,35 @@ beta a b f u --> P: hterm (arrow b o) => H: eps (App b o P (f u)) => H.
 
 mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) -> u: hterm a -> v: hterm a ->
   eps (heq (arrow a b) s t) -> eps (heq a u v) -> eps (heq b (App a b s u) (App a b t v)).
-;; [a: htype,
-;;  b: htype,
-;;  s: hterm (arrow a b),
-;;  t: hterm (arrow a b),
-;;  u: hterm a,
-;;  v: hterm a,
-;;  Hst: eps (heq (arrow a b) s t), ; = P: hterm (arrow (arrow a b) o) -> Hs: eps (App (arrow a b) o P s) -> eps (App (arrow a b) o P y)
-;;  Huv: eps (heq a u v)] ; = P: hterm (arrow a o) -> Hu: eps (App a o P u) -> eps (App a o P v)
-;; mk_comb a b s t u v Hst Huv --> P: hterm (arrow b o) => Hsu: eps (App b o P (App a b s u)) =>
-;;   ; eps (App b o P (App a b t v))
+[a: htype,
+ b: htype,
+ s: hterm (arrow a b),
+ t: hterm (arrow a b),
+ u: hterm a,
+ v: hterm a,
+ Hst: eps (heq (arrow a b) s t),
+ Huv: eps (heq a u v)]
+mk_comb a b s t u v Hst Huv --> P: hterm (arrow b o) => Hsu: eps (App b o P (App a b s u)) => Hst (Lam (arrow a b) o (s: hterm (arrow a b) => App b o P (App a b s v))) (Huv (Lam a o (u: hterm a => App b o P (App a b s u))) Hsu).
 
 
-;; Abs cannot be written (meta-rule), we can only write instances of it
+eq_mp : p: hterm o -> q: hterm o -> eps (heq o p q) -> eps p -> eps q.
+[p: hterm o,
+ q: hterm o,
+ Hpq: eps (heq o p q), ; P: hterm (arrow o o) -> eps (App o o P p) -> eps (App o o P q)
+ Hp: eps p]
+eq_mp p q Hpq Hp --> Hpq (Lam o o (r: hterm o => r)) Hp.
 
 
-;; Liste des règles de HOL-Light qui fonctionnent :
-;; - refl
-;; - trans
-;; - sym
+;; eq_mp : p: hterm o -> q: hterm o -> eps (hequiv p q) -> eps p -> eps q.
+;; [p: hterm o,
+;;  q: hterm o,
+;;  Hpq: eps (hequiv p q),
+;;  Hp: eps p]
+;; eq_mp p q Hpq Hp --> Hpq (Lam o o (r: hterm o => r)) Hp.
+
+
+
+;; Abs (ABS) cannot be written (meta-rule), we can only write instances
+;; of it
+
+;; Impas (IMP_ANTISYM_RULE) is exactly prop_ext
