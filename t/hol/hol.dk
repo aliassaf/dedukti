@@ -41,8 +41,8 @@ heq: a: htype -> hterm a -> hterm a -> hterm o.
  y: hterm a] App a o (App a (arrow a o) (Eq a) x) y --> heq a x y.
 
 
-hequiv: hterm o -> hterm o -> hterm o.
-[] heq o --> hequiv.
+;hequiv: hterm o -> hterm o -> hterm o.
+;[] heq o --> hequiv.
 
 
 ;; eps
@@ -65,7 +65,7 @@ eps: hterm o -> Type.
 fun_ext: a: htype -> b: htype -> f: hterm (arrow a b) -> g: hterm (arrow a b) ->
     (x: hterm a -> eps (heq b (App a b f x) (App a b g x))) -> eps (heq (arrow a b) f g).
 
-prop_ext: p: hterm o -> q: hterm o -> eps (himp p q) -> eps (himp q p) -> eps (hequiv p q).
+prop_ext: p: hterm o -> q: hterm o -> eps (himp p q) -> eps (himp q p) -> eps (heq o p q).
 
 
 ;; Rules
@@ -114,10 +114,10 @@ mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) ->
 mk_comb a b s t u v Hst Huv --> P: hterm (arrow b o) => Hsu: eps (App b o P (App a b s u)) => Hst (Lam (arrow a b) o (s: hterm (arrow a b) => App b o P (App a b s v))) (Huv (Lam a o (u: hterm a => App b o P (App a b s u))) Hsu).
 
 
-eq_mp : p: hterm o -> q: hterm o -> eps (hequiv p q) -> eps p -> eps q.
+eq_mp : p: hterm o -> q: hterm o -> eps (heq o p q) -> eps p -> eps q.
 [p: hterm o,
  q: hterm o,
- Hpq: eps (hequiv p q), ; P: hterm (arrow o o) -> eps (App o o P p) -> eps (App o o P q)
+ Hpq: eps (heq o p q),
  Hp: eps p]
 eq_mp p q Hpq Hp --> Hpq (Lam o o (r: hterm o => r)) Hp.
 
