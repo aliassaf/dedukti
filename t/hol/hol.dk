@@ -13,6 +13,12 @@ App: a: htype -> b: htype -> hterm (arrow a b) -> hterm a -> hterm b.
 Imp: hterm (arrow o (arrow o o)).
 Forall: a: htype -> hterm (arrow (arrow a o) o).
 Eq: a: htype -> hterm (arrow a (arrow a o)).
+False: hterm o.
+True: hterm o.
+Not: hterm (arrow o o).
+Or: hterm (arrow o (arrow o o)).
+And: hterm (arrow o (arrow o o)).
+Exists: a: htype -> hterm (arrow (arrow a o) o).
 
 
 ;; β-rule
@@ -25,65 +31,107 @@ Eq: a: htype -> hterm (arrow a (arrow a o)).
 
 ;; Facilities
 
-himp: hterm o -> hterm o -> hterm o.
-[a: hterm o,
- b: hterm o] App o o (App o (arrow o o) Imp a) b --> himp a b.
+;; himp: hterm o -> hterm o -> hterm o.
+;; [a: hterm o,
+;;  b: hterm o] App o o (App o (arrow o o) Imp a) b --> himp a b.
 
 
-hforall: a: htype -> hterm (arrow a o) -> hterm o.
-[a: htype,
- P: hterm (arrow a o)] App (arrow a o) o (Forall a) P --> hforall a P.
+;; hforall: a: htype -> hterm (arrow a o) -> hterm o.
+;; [a: htype,
+;;  P: hterm (arrow a o)] App (arrow a o) o (Forall a) P --> hforall a P.
 
 
-heq: a: htype -> hterm a -> hterm a -> hterm o.
-[a: htype,
- x: hterm a,
- y: hterm a] App a o (App a (arrow a o) (Eq a) x) y --> heq a x y.
+;; heq: a: htype -> hterm a -> hterm a -> hterm o.
+;; [a: htype,
+;;  x: hterm a,
+;;  y: hterm a] App a o (App a (arrow a o) (Eq a) x) y --> heq a x y.
 
 
 ;hequiv: hterm o -> hterm o -> hterm o.
 ;[] heq o --> hequiv.
 
 
-;; eps
+;; eps and the encoding of the logical connectives using → and ∀
 
 eps: hterm o -> Type.
 
+;; Implication and forall: really easy
+
 [a: hterm o,
- b: hterm o] eps (himp a b) --> eps a -> eps b.
+ b: hterm o] eps (App o o (App o (arrow o o) Imp a) b) --> eps a -> eps b.
+;; [a: hterm o,
+;;  b: hterm o] eps (himp a b) --> eps a -> eps b.
 
 [a: htype,
- f: hterm a -> hterm o] eps (hforall a (Lam a o f)) --> b: hterm a -> eps (f b).
+ f: hterm a -> hterm o] eps (App (arrow a o) o (Forall a) (Lam a o f)) --> b: hterm a -> eps (f b).
+;; [a: htype,
+;;  f: hterm a -> hterm o] eps (hforall a (Lam a o f)) --> b: hterm a -> eps (f b).
+
+;; Equality: Leibniz
 
 [a: htype,
  x: hterm a,
- y: hterm a] eps (heq a x y) --> P: hterm (arrow a o) -> eps (App a o P x) -> eps (App a o P y).
+ y: hterm a] eps (App a o (App a (arrow a o) (Eq a) x) y) --> P: hterm (arrow a o) -> eps (App a o P x) -> eps (App a o P y).
+;; [a: htype,
+;;  x: hterm a,
+;;  y: hterm a] eps (heq a x y) --> P: hterm (arrow a o) -> eps (App a o P x) -> eps (App a o P y).
+
+;; Other logical connectives: the standard way to encode them with → and ∀
+
+[] eps False --> P: hterm o -> eps P.
+
+[] eps True --> P: hterm o -> eps P -> eps P.
+
+[P: hterm o] eps (App o o Not P) --> eps P -> eps False.
+
+[A: hterm o,
+ B: hterm o] eps (App o o (App o (arrow o o) Or A) B) --> P: hterm o -> (eps A -> eps P) -> (eps B -> eps P) -> eps P.
+
+[A: hterm o,
+ B: hterm o] eps (App o o (App o (arrow o o) And A) B) --> P: hterm o -> (eps A -> eps B -> eps P) -> eps P.
+
+[a: htype,
+ f: hterm a -> hterm o] eps (App (arrow a o) o (Exists a) (Lam a o f)) --> P: hterm o -> (x: hterm a -> eps (f x) -> eps P) -> eps P.
+
 
 
 ;; Extensionality
 
 fun_ext: a: htype -> b: htype -> f: hterm (arrow a b) -> g: hterm (arrow a b) ->
-    (x: hterm a -> eps (heq b (App a b f x) (App a b g x))) -> eps (heq (arrow a b) f g).
+    (x: hterm a -> eps (App b o (App b (arrow b o) (Eq b) (App a b f x)) (App a b g x))) -> eps (App (arrow a b) o (App (arrow a b) (arrow (arrow a b) o) (Eq (arrow a b)) f) g).
+;; fun_ext: a: htype -> b: htype -> f: hterm (arrow a b) -> g: hterm (arrow a b) ->
+;;     (x: hterm a -> eps (heq b (App a b f x) (App a b g x))) -> eps (heq (arrow a b) f g).
 
-prop_ext: p: hterm o -> q: hterm o -> eps (himp p q) -> eps (himp q p) -> eps (heq o p q).
+prop_ext: p: hterm o -> q: hterm o -> eps (App o o (App o (arrow o o) Imp p) q) -> eps (App o o (App o (arrow o o) Imp q) p) -> eps (App o o (App o (arrow o o) (Eq o) p) q).
+;; prop_ext: p: hterm o -> q: hterm o -> eps (App o o (App o (arrow o o) Imp p) q) -> eps (App o o (App o (arrow o o) Imp q) p) -> eps (heq o p q).
+
 
 
 ;; Rules
 
-refl: a: htype -> x: hterm a -> eps (heq a x x).
+refl: a: htype -> x: hterm a -> eps (App a o (App a (arrow a o) (Eq a) x) x).
 [a: htype,
  x: hterm a] refl a x --> P: hterm (arrow a o) => h: eps (App a o P x) => h.
+;; refl: a: htype -> x: hterm a -> eps (heq a x x).
+;; [a: htype,
+;;  x: hterm a] refl a x --> P: hterm (arrow a o) => h: eps (App a o P x) => h.
 
 
-sym: a: htype -> x: hterm a -> y: hterm a -> eps (heq a x y) -> eps (heq a y x).
+sym: a: htype -> x: hterm a -> y: hterm a -> eps (App a o (App a (arrow a o) (Eq a) x) y) -> eps (App a o (App a (arrow a o) (Eq a) y) x).
 [a: htype,
  x: hterm a,
  y: hterm a,
- Hxy: eps (heq a x y)]
-sym a x y Hxy --> P: hterm (arrow a o) => Hy: eps (App a o P y) => Hxy (Lam a o (z: hterm a => himp (App a o P z) (App a o P x))) (H: eps (App a o P x) => H) Hy.
+ Hxy: eps (App a o (App a (arrow a o) (Eq a) x) y)]
+sym a x y Hxy --> P: hterm (arrow a o) => Hy: eps (App a o P y) => Hxy (Lam a o (z: hterm a => (App o o (App o (arrow o o) Imp (App a o P z)) (App a o P x)))) (H: eps (App a o P x) => H) Hy.
+;; sym: a: htype -> x: hterm a -> y: hterm a -> eps (heq a x y) -> eps (heq a y x).
+;; [a: htype,
+;;  x: hterm a,
+;;  y: hterm a,
+;;  Hxy: eps (heq a x y)]
+;; sym a x y Hxy --> P: hterm (arrow a o) => Hy: eps (App a o P y) => Hxy (Lam a o (z: hterm a => (App o o (App o (arrow o o) Imp (App a o P z)) (App a o P x)))) (H: eps (App a o P x) => H) Hy.
 
 
-trans: a: htype -> s: hterm a -> t: hterm a -> u: hterm a -> eps (heq a s t) -> eps (heq a t u) -> eps (heq a s u).
+trans: a: htype -> s: hterm a -> t: hterm a -> u: hterm a -> eps (App a o (App a (arrow a o) (Eq a) s) t) -> eps (App a o (App a (arrow a o) (Eq a) t) u) -> eps (App a o (App a (arrow a o) (Eq a) s) u).
 [a: htype,
  s: hterm a,
  t: hterm a,
@@ -91,39 +139,93 @@ trans: a: htype -> s: hterm a -> t: hterm a -> u: hterm a -> eps (heq a s t) -> 
  Hst: P: hterm (arrow a o) -> eps (App a o P s) -> eps (App a o P t),
  Htu: P: hterm (arrow a o) -> eps (App a o P t) -> eps (App a o P u)]
 trans a s t u Hst Htu --> P: hterm (arrow a o) => Hs: eps (App a o P s) => Htu P (Hst P Hs).
+;; trans: a: htype -> s: hterm a -> t: hterm a -> u: hterm a -> eps (heq a s t) -> eps (heq a t u) -> eps (heq a s u).
+;; [a: htype,
+;;  s: hterm a,
+;;  t: hterm a,
+;;  u: hterm a,
+;;  Hst: P: hterm (arrow a o) -> eps (App a o P s) -> eps (App a o P t),
+;;  Htu: P: hterm (arrow a o) -> eps (App a o P t) -> eps (App a o P u)]
+;; trans a s t u Hst Htu --> P: hterm (arrow a o) => Hs: eps (App a o P s) => Htu P (Hst P Hs).
 
 
-beta: a: htype -> b: htype -> f: (hterm a -> hterm b) -> u: hterm a -> eps (heq b (App a b (Lam a b f) u) (f u)).
+beta: a: htype -> b: htype -> f: (hterm a -> hterm b) -> u: hterm a -> eps (App b o (App b (arrow b o) (Eq b) (App a b (Lam a b f) u)) (f u)).
 [a: htype,
  b: htype,
  f: hterm a -> hterm b,
  u: hterm a]
 beta a b f u --> P: hterm (arrow b o) => H: eps (App b o P (f u)) => H.
+;; beta: a: htype -> b: htype -> f: (hterm a -> hterm b) -> u: hterm a -> eps (heq b (App a b (Lam a b f) u) (f u)).
+;; [a: htype,
+;;  b: htype,
+;;  f: hterm a -> hterm b,
+;;  u: hterm a]
+;; beta a b f u --> P: hterm (arrow b o) => H: eps (App b o P (f u)) => H.
 
 
 mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) -> u: hterm a -> v: hterm a ->
-  eps (heq (arrow a b) s t) -> eps (heq a u v) -> eps (heq b (App a b s u) (App a b t v)).
+  eps (App (arrow a b) o (App (arrow a b) (arrow (arrow a b) o) (Eq (arrow a b)) s) t) -> eps (App a o (App a (arrow a o) (Eq a) u) v) -> eps (App b o (App b (arrow b o) (Eq b) (App a b s u)) (App a b t v)).
 [a: htype,
  b: htype,
  s: hterm (arrow a b),
  t: hterm (arrow a b),
  u: hterm a,
  v: hterm a,
- Hst: eps (heq (arrow a b) s t),
- Huv: eps (heq a u v)]
+ Hst: eps (App (arrow a b) o (App (arrow a b) (arrow (arrow a b) o) (Eq (arrow a b)) s) t),
+ Huv: eps (App a o (App a (arrow a o) (Eq a) u) v)]
 mk_comb a b s t u v Hst Huv --> P: hterm (arrow b o) => Hsu: eps (App b o P (App a b s u)) => Hst (Lam (arrow a b) o (s: hterm (arrow a b) => App b o P (App a b s v))) (Huv (Lam a o (u: hterm a => App b o P (App a b s u))) Hsu).
+;; mk_comb: a: htype -> b: htype -> s: hterm (arrow a b) -> t: hterm (arrow a b) -> u: hterm a -> v: hterm a ->
+;;   eps (heq (arrow a b) s t) -> eps (heq a u v) -> eps (heq b (App a b s u) (App a b t v)).
+;; [a: htype,
+;;  b: htype,
+;;  s: hterm (arrow a b),
+;;  t: hterm (arrow a b),
+;;  u: hterm a,
+;;  v: hterm a,
+;;  Hst: eps (heq (arrow a b) s t),
+;;  Huv: eps (heq a u v)]
+;; mk_comb a b s t u v Hst Huv --> P: hterm (arrow b o) => Hsu: eps (App b o P (App a b s u)) => Hst (Lam (arrow a b) o (s: hterm (arrow a b) => App b o P (App a b s v))) (Huv (Lam a o (u: hterm a => App b o P (App a b s u))) Hsu).
 
 
-eq_mp : p: hterm o -> q: hterm o -> eps (heq o p q) -> eps p -> eps q.
+eq_mp : p: hterm o -> q: hterm o -> eps (App o o (App o (arrow o o) (Eq o) p) q) -> eps p -> eps q.
 [p: hterm o,
  q: hterm o,
- Hpq: eps (heq o p q),
+ Hpq: eps (App o o (App o (arrow o o) (Eq o) p) q),
  Hp: eps p]
 eq_mp p q Hpq Hp --> Hpq (Lam o o (r: hterm o => r)) Hp.
-
+;; eq_mp : p: hterm o -> q: hterm o -> eps (heq o p q) -> eps p -> eps q.
+;; [p: hterm o,
+;;  q: hterm o,
+;;  Hpq: eps (heq o p q),
+;;  Hp: eps p]
+;; eq_mp p q Hpq Hp --> Hpq (Lam o o (r: hterm o => r)) Hp.
 
 
 ;; Abs (ABS) cannot be written (meta-rule), we can only write instances
 ;; of it
 
 ;; Impas (IMP_ANTISYM_RULE) is exactly prop_ext
+
+
+;; HOL-Light's definitions of logical connectives is provable in our
+;; logical framework
+
+hollight_DEF_T : eps (App o o (App o (arrow o o) (Eq o) True) (App (arrow o o) o (App (arrow o o) (arrow (arrow o o) o) (Eq (arrow o o)) (Lam o o (x1: hterm o => x1))) (Lam o o (x1: hterm o => x1)))).
+[] hollight_DEF_T --> prop_ext True (App (arrow o o) o (App (arrow o o) (arrow (arrow o o) o) (Eq (arrow o o)) (Lam o o (x1: hterm o => x1))) (Lam o o (x1: hterm o => x1))) (H1: (P: hterm o -> eps P -> eps P) => (P: hterm (arrow (arrow o o) o) => (H: eps (App (arrow o o) o P (Lam o o (x1 : hterm o => x1))) => H))) (H1: (P : hterm (arrow (arrow o o) o) ->
+       eps (App (arrow o o) o P (Lam o o (x1 : hterm o => x1))) ->
+       eps (App (arrow o o) o P (Lam o o (x1 : hterm o => x1)))) =>
+       (P: hterm o => (H: eps P => H))).
+
+hollight_DEF__slash__backslash_ : eps (App (arrow o (arrow o o)) o (App (arrow o (arrow o o)) (arrow (arrow o (arrow o o)) o) (Eq (arrow o (arrow o o))) And) (Lam o (arrow o o) (x1: hterm o => (Lam o o (x2: hterm o => (App (arrow (arrow o (arrow o o)) o) o (App (arrow (arrow o (arrow o o)) o) (arrow (arrow (arrow o (arrow o o)) o) o) (Eq (arrow (arrow o (arrow o o)) o)) (Lam (arrow o (arrow o o)) o (x3: hterm (arrow o (arrow o o)) => (App o o (App o (arrow o o) x3 x1) x2)))) (Lam (arrow o (arrow o o)) o (x3: hterm (arrow o (arrow o o)) => (App o o (App o (arrow o o) x3 True) True))))))))).
+
+hollight_DEF__equal__equal__greaterthan_ : eps (App (arrow o (arrow o o)) o (App (arrow o (arrow o o)) (arrow (arrow o (arrow o o)) o) (Eq (arrow o (arrow o o))) Imp) (Lam o (arrow o o) (x1: hterm o => (Lam o o (x2: hterm o => (App o o (App o (arrow o o) (Eq o) (App o o (App o (arrow o o) And x1) x2)) x1)))))).
+
+hollight_DEF__exclamationmark_ : X1: htype -> eps (App (arrow (arrow X1 o) o) o (App (arrow (arrow X1 o) o) (arrow (arrow (arrow X1 o) o) o) (Eq (arrow (arrow X1 o) o)) (Forall X1)) (Lam (arrow X1 o) o (x4: hterm (arrow X1 o) => (App (arrow X1 o) o (App (arrow X1 o) (arrow (arrow X1 o) o) (Eq (arrow X1 o)) x4) (Lam X1 o (x5: hterm X1 => True)))))).
+
+hollight_DEF__questionmark_ : X1: htype -> eps (App (arrow (arrow X1 o) o) o (App (arrow (arrow X1 o) o) (arrow (arrow (arrow X1 o) o) o) (Eq (arrow (arrow X1 o) o)) (Exists X1)) (Lam (arrow X1 o) o (x4: hterm (arrow X1 o) => (App (arrow o o) o (Forall o) (Lam o o (x2: hterm o => (App o o (App o (arrow o o) Imp (App (arrow X1 o) o (Forall X1) (Lam X1 o (x5: hterm X1 => (App o o (App o (arrow o o) Imp (App X1 o x4 x5)) x2))))) x2))))))).
+
+hollight_DEF__backslash__slash_ : eps (App (arrow o (arrow o o)) o (App (arrow o (arrow o o)) (arrow (arrow o (arrow o o)) o) (Eq (arrow o (arrow o o))) Or) (Lam o (arrow o o) (x1: hterm o => (Lam o o (x2: hterm o => (App (arrow o o) o (Forall o) (Lam o o (x6: hterm o => (App o o (App o (arrow o o) Imp (App o o (App o (arrow o o) Imp x1) x6)) (App o o (App o (arrow o o) Imp (App o o (App o (arrow o o) Imp x2) x6)) x6)))))))))).
+
+hollight_DEF_F : eps (App o o (App o (arrow o o) (Eq o) False) (App (arrow o o) o (Forall o) (Lam o o (x1: hterm o => x1)))).
+
+hollight_DEF__tilde_ : eps (App (arrow o o) o (App (arrow o o) (arrow (arrow o o) o) (Eq (arrow o o)) Not) (Lam o o (x1: hterm o => (App o o (App o (arrow o o) Imp x1) False)))).
