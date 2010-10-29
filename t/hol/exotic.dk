@@ -1,0 +1,7 @@
+g: hol.hterm (hol.arrow hol.o hol.o) -> hol.hterm hol.o.
+[f: (hol.hterm hol.o) -> (hol.hterm hol.o)] g (hol.Lam hol.o hol.o f) --> hol.True.
+[f: hol.hterm (hol.arrow hol.o (hol.arrow hol.o hol.o)), x: hol.hterm hol.o] g (hol.App hol.o (hol.arrow hol.o hol.o) f x) --> hol.False.
+
+
+foo: hol.hterm (hol.arrow (hol.arrow hol.o hol.o) hol.o).
+[] foo --> hol.Lam (hol.arrow hol.o hol.o) hol.o (x: hol.hterm (hol.arrow hol.o hol.o) => g x).
